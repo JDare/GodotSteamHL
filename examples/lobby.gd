@@ -7,6 +7,12 @@ onready var member_list = $ItemList
 
 onready var connected_gui = $ConnectedGUI
 
+onready var rpc_on_server_btn = $ConnectedGUI/RPCOnServerBtn
+onready var rpc_on_server_label = $ConnectedGUI/RPCOnServerBtn/Label
+
+onready var rset_slider = $ConnectedGUI/RSetSlider
+onready var rset_label = $ConnectedGUI/RSetSlider/Label
+
 onready var chat_line_edit = $ConnectedGUI/ChatLineEdit
 onready var chat_send_btn = $ConnectedGUI/ChatSendBtn
 onready var chat_window = $ConnectedGUI/ChatWindow
@@ -22,13 +28,16 @@ func _ready():
 	SteamLobby.connect("player_left_lobby", self, "on_player_left")
 	SteamLobby.connect("chat_message_received", self, "on_chat_message_received")
 	
+	SteamNetwork.register(self)
 	SteamNetwork.connect("peer_status_updated", self, "on_peer_status_changed")
 	
 	create_lobby_btn.connect("pressed", self, "on_create_lobby_pressed")
 	invite_friend_btn.connect("pressed", self, "on_invite_friend_pressed")
+	
 	chat_line_edit.connect("text_entered", self, "on_chat_text_entered")
 	chat_send_btn.connect("pressed", self, "on_chat_send_pressed")
 
+	rpc_on_server_btn.connect("pressed", self, "on_rpc_server_pressed")
 
 ###########################################
 # Steam Lobby/Network connect functions
@@ -62,6 +71,17 @@ func on_peer_status_changed(steam_id):
 	render_lobby_members()
 
 ################################################
+# SteamNetwork Examples:
+
+func on_rpc_server_pressed():
+	SteamNetwork.rpc_on_server(self, "_server_button_pressed", ["Hello Server", 42])
+
+func _server_button_pressed(message: String, number: int):
+	print("Server received RPC from someone!")
+
+
+################################################
+# Basic lobby connections/setup
 
 func on_create_lobby_pressed():
 	if SteamLobby.in_lobby():

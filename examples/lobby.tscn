@@ -40,6 +40,45 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="RPCOnServerBtn" type="Button" parent="ConnectedGUI"]
+margin_left = 732.0
+margin_top = 42.0
+margin_right = 981.0
+margin_bottom = 91.0
+text = "Trigger RPC on Server"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="ConnectedGUI/RPCOnServerBtn"]
+margin_left = 4.0
+margin_top = 62.0
+margin_right = 248.0
+margin_bottom = 78.0
+text = "Server Said: \"\""
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RSetSlider" type="HSlider" parent="ConnectedGUI"]
+margin_left = 734.0
+margin_top = 164.0
+margin_right = 980.0
+margin_bottom = 199.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="ConnectedGUI/RSetSlider"]
+margin_left = 6.0
+margin_top = 40.0
+margin_right = 235.0
+margin_bottom = 54.0
+text = "Value: 0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="CreateLobbyBtn" type="Button" parent="."]
 margin_left = 44.0
 margin_top = 41.0
