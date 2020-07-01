@@ -72,6 +72,7 @@ func _send_p2p_packet(steam_id, data: PoolByteArray, send_type: int = Steam.P2P_
 	return Steam.sendP2PPacket(steam_id, data, send_type, channel)
 
 func _broadcast_p2p_packet(data: PoolByteArray, send_type: int = Steam.P2P_SEND_RELIABLE, channel: int = 0):
+	print("Broadcast:", data)
 	for peer_id in _peers:
 		if peer_id != _my_steam_id:
 			_send_p2p_packet(peer_id, data, send_type, channel)
@@ -84,7 +85,7 @@ func _read_p2p_packet():
 		
 		# Packet is a Dict which contains {"data": PoolByteArray, "steamIDRemote": CSteamID}
 		var packet = Steam.readP2PPacket(packet_size, 0)
-
+		
 		# or empty if it fails
 		if packet.empty():
 			push_warning("Steam Networking: read an empty packet with non-zero size!")
@@ -109,10 +110,16 @@ func _confirm_peer(steam_id):
 func _send_peer_state():
 	print("Sending Peer State")
 	var peers = []
-	peers.append(PACKET_TYPE.PEER_STATE)
 	for peer in _peers.values():
+		prints(peer.steam_id, peer.connected, peer.host)
 		peers.append(peer.serialize())
-	_broadcast_p2p_packet(var2bytes(peers))
+	var payload = PoolByteArray()
+	# add packet type header
+	payload.append(PACKET_TYPE.PEER_STATE)
+	# add peer data
+	payload.append_array(var2bytes(peers))
+	
+	_broadcast_p2p_packet(payload)
 
 func _update_peer_state(payload: PoolByteArray):
 	print("Updating Peer State")
@@ -121,6 +128,7 @@ func _update_peer_state(payload: PoolByteArray):
 	for serialized_peer in serialized_peers:
 		var peer = Peer.new()
 		peer.deserialize(serialized_peer)
+		prints(peer.steam_id, peer.connected, peer.host)
 		if not _peers.has(peer.steam_id) or not peer.eq(_peers[peer.steam_id]):
 			_peers[peer.steam_id] = peer
 			emit_signal("peer_status_updated", peer.steam_id)
@@ -128,7 +136,7 @@ func _update_peer_state(payload: PoolByteArray):
 	for peer_id in _peers.keys():
 		if not peer_id in new_peers:
 			_peers.erase(peer_id)
-			emit_signal("peer_status_changed", peer_id)
+			emit_signal("peer_status_updated", peer_id)
 			
 
 func _handle_packet(sender_id, payload: PoolByteArray):
@@ -136,6 +144,7 @@ func _handle_packet(sender_id, payload: PoolByteArray):
 		push_error("Cannot handle an empty packet payload!")
 		return
 	var packet_type = payload[0]
+	print("Received packet %s from %s" % [packet_type, sender_id])
 	var packet_data = null
 	if payload.size() > 1:
 		packet_data = payload.subarray(1, payload.size()-1)
@@ -183,12 +192,14 @@ class Peer:
 	var steam_id: int
 	
 	func serialize() -> PoolByteArray:
-		return var2bytes([steam_id, connected, host])
+		var data = [steam_id, connected, host]
+		return var2bytes(data)
 
 	func deserialize(data: PoolByteArray):
-		steam_id = data[0]
-		connected = data[1]
-		host = data[2]
+		var unpacked = bytes2var(data)
+		steam_id = unpacked[0]
+		connected = unpacked[1]
+		host = unpacked[2]
 		
 	func eq(peer: Peer):
 		return peer.steam_id == steam_id and \

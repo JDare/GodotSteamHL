@@ -22,7 +22,7 @@ func _ready():
 	SteamLobby.connect("player_left_lobby", self, "on_player_left")
 	SteamLobby.connect("chat_message_received", self, "on_chat_message_received")
 	
-	SteamNetwork.connect("peer_status_updated", self, "on_peer_connection_confirmed")
+	SteamNetwork.connect("peer_status_updated", self, "on_peer_status_changed")
 	
 	create_lobby_btn.connect("pressed", self, "on_create_lobby_pressed")
 	invite_friend_btn.connect("pressed", self, "on_invite_friend_pressed")
@@ -56,7 +56,7 @@ func on_chat_message_received(sender_steam_id, steam_name, message):
 	var display_msg = steam_name + ": " + message
 	chat_window.add_item(display_msg)
 
-func on_peer_connection_confirmed(steam_id):
+func on_peer_status_changed(steam_id):
 	# This means we have confirmed a P2P connection going back and forth
 	# between us and this steam user.
 	render_lobby_members()
