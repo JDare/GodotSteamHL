@@ -9,3 +9,5 @@ export_presets.cfg
 data_*/
 builds
 builds/*
+icon.png
+default_env.tres

@@ -35,10 +35,10 @@ func _ready():
 func get_lobby_id():
 	return _steam_lobby_id
 
-func in_lobby():
+func in_lobby() -> bool:
 	return not _steam_lobby_id == 0
 
-func is_owner(steam_id = -1):
+func is_owner(steam_id = -1) -> bool:
 	if steam_id > 0:
 		return get_owner() == steam_id
 	return get_owner() == _my_steam_id
