@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://examples/lobby.gd" type="Script" id=1]
+[ext_resource path="res://examples/network_slider.gd" type="Script" id=2]
 
 [node name="SteamLobby" type="Node2D"]
 script = ExtResource( 1 )
@@ -65,6 +66,7 @@ margin_left = 734.0
 margin_top = 164.0
 margin_right = 980.0
 margin_bottom = 199.0
+script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -78,6 +80,23 @@ text = "Value: 0"
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Title" type="Label" parent="ConnectedGUI/RSetSlider"]
+margin_left = 1.0
+margin_top = -11.0
+margin_right = 231.0
+margin_bottom = 3.0
+text = "Server RSet (only server can change)"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ChangeHostBtn" type="Button" parent="ConnectedGUI"]
+margin_left = 489.245
+margin_top = 40.7551
+margin_right = 607.245
+margin_bottom = 78.7551
+text = "Change Host"
 
 [node name="CreateLobbyBtn" type="Button" parent="."]
 margin_left = 44.0

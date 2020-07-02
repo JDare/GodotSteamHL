@@ -1,13 +1,16 @@
 extends Node
 
+
 signal player_joined_lobby(steam_id)
 signal player_left_lobby(steam_id)
 signal lobby_created(lobby_id)
 signal lobby_joined(lobby_id)
+signal lobby_owner_changed(previous_owner, new_owner)
 signal chat_message_received(sender_steam_id, message)
 
 var _my_steam_id := 0
 var _steam_lobby_id := 0
+var _steam_lobby_host := 0
 var _members = {}
 
 var _creating_lobby = false
@@ -108,6 +111,8 @@ func _update_lobby_members():
 		# Clear your previous lobby list
 	_members.clear()
 
+	_steam_lobby_host = Steam.getLobbyOwner(_steam_lobby_id)
+
 	# Get the number of members from this lobby from Steam
 	var num_members: int = Steam.getNumLobbyMembers(_steam_lobby_id)
 
@@ -127,8 +132,18 @@ func _on_lobby_invite(inviter, lobby, game):
 	pass
 	
 func _on_lobby_data_update(success, lobby_id, member_id, key):
-	print("Lobby Updated %s %s %s %s" % [success, lobby_id, member_id, key])
-	
+	if success:
+		# check for host change
+		var host = Steam.getLobbyOwner(_steam_lobby_id)
+		if host != _steam_lobby_host and host > 0:
+			_owner_changed(_steam_lobby_host, host)
+			_steam_lobby_host = host
+		
+#	print("Lobby Updated %s %s %s %s" % [success, lobby_id, member_id, key])
+
+func _owner_changed(was_steam_id, now_steam_id):
+	emit_signal("lobby_owner_changed", was_steam_id, now_steam_id)
+
 func _on_lobby_message(result, sender_steam_id, message, chat_type):
 	if result == 0:
 		push_error("Received lobby message, but 0 bytes were retrieved!")

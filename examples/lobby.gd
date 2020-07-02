@@ -13,6 +13,8 @@ onready var rpc_on_server_label = $ConnectedGUI/RPCOnServerBtn/Label
 onready var rset_slider = $ConnectedGUI/RSetSlider
 onready var rset_label = $ConnectedGUI/RSetSlider/Label
 
+onready var change_owner_btn = $ConnectedGUI/ChangeHostBtn
+
 onready var chat_line_edit = $ConnectedGUI/ChatLineEdit
 onready var chat_send_btn = $ConnectedGUI/ChatSendBtn
 onready var chat_window = $ConnectedGUI/ChatWindow
@@ -25,11 +27,11 @@ func _ready():
 	
 	SteamLobby.connect("lobby_created", self, "on_lobby_created")
 	SteamLobby.connect("lobby_joined", self, "on_lobby_joined")
+	SteamLobby.connect("lobby_owner_changed", self, "on_lobby_owner_changed")
 	SteamLobby.connect("player_joined_lobby", self, "on_player_joined")
 	SteamLobby.connect("player_left_lobby", self, "on_player_left")
 	SteamLobby.connect("chat_message_received", self, "on_chat_message_received")
 	
-	SteamNetwork.register(self)
 	SteamNetwork.connect("peer_status_updated", self, "on_peer_status_changed")
 	
 	create_lobby_btn.connect("pressed", self, "on_create_lobby_pressed")
@@ -39,6 +41,8 @@ func _ready():
 	chat_send_btn.connect("pressed", self, "on_chat_send_pressed")
 
 	rpc_on_server_btn.connect("pressed", self, "on_rpc_server_pressed")
+	
+	change_owner_btn.connect("pressed", self, "on_change_owner_pressed")
 
 ###########################################
 # Steam Lobby/Network connect functions
@@ -53,6 +57,10 @@ func on_lobby_joined(lobby_id):
 	render_lobby_members()
 	connected_gui.visible = true
 	create_lobby_btn.text = "Leave Lobby"
+	
+func on_lobby_owner_changed(old_owner, new_owner):
+	render_lobby_members()
+	print("Lobby Ownership Changed: %s => %s" % [old_owner, new_owner])
 
 func on_player_joined(steam_id):
 	render_lobby_members()
@@ -78,7 +86,6 @@ func on_rpc_server_pressed():
 	SteamNetwork.rpc_on_server(self, "_server_button_pressed", ["Hello World"])
 
 func _server_button_pressed(message: String):
-	print("Server received RPC from someone!")
 	# Server could validate incoming data here, perform state change etc.
 	message += " - From Server"
 	var number = randi() % 100
@@ -89,6 +96,13 @@ func _client_button_pressed(message, number):
 
 ################################################
 # Basic lobby connections/setup
+
+func on_change_owner_pressed():
+	var user_index = member_list.get_selected_items()[0]
+	var user = SteamLobby.get_lobby_members().keys()[user_index]
+	var me = Steam.getSteamID()
+	if user != me and SteamLobby.is_owner(me):
+		Steam.setLobbyOwner(SteamLobby.get_lobby_id(), user)
 
 func on_create_lobby_pressed():
 	if SteamLobby.in_lobby():
@@ -114,7 +128,6 @@ func on_chat_send_pressed():
 	on_chat_text_entered(message)
 
 func render_lobby_members():
-	print("Rendering player list ...")
 	member_list.clear()
 	var lobby_members = SteamLobby.get_lobby_members()
 	for member_id in lobby_members:
