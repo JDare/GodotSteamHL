@@ -31,12 +31,12 @@ func _process(delta):
 
 # CLIENTS AND SERVER
 # Calls this method on the server
-func rpc_on_server(caller: Node, method: String, args: Array):
+func rpc_on_server(caller: Node, method: String, args: Array = []):
 	_rpc(get_server_peer(), caller, method, args)
 
 # SERVER ONLY
 # Calls this method on the client specified
-func rpc_on_client(to_peer: Peer, caller: Node, method: String, args: Array):
+func rpc_on_client(to_peer: Peer, caller: Node, method: String, args: Array = []):
 	if not is_server():
 		push_warning("Tried to call RPC on client: %s %s" % [caller, method])
 		return
@@ -44,7 +44,7 @@ func rpc_on_client(to_peer: Peer, caller: Node, method: String, args: Array):
 
 # SERVER ONLY
 # Calls this method on ALL clients connected
-func rpc_all_clients(caller: Node, method: String, args: Array):
+func rpc_all_clients(caller: Node, method: String, args: Array = []):
 	for peer in _peers.values():
 		rpc_on_client(peer, caller, method, args)
 
@@ -451,7 +451,8 @@ func _execute_rpc(sender: Peer, path_cache_index: int, method: String, args: Arr
 	if not node.has_method(method):
 		push_error("Node %s does not have a method %s" % [node.name, method])
 		return
-	
+		
+	args.push_front(sender.steam_id)
 	node.callv(method, args)
 
 func _on_p2p_session_connect_fail(lobby_id: int, session_error):

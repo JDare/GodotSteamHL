@@ -85,13 +85,13 @@ func on_peer_status_changed(steam_id):
 func on_rpc_server_pressed():
 	SteamNetwork.rpc_on_server(self, "_server_button_pressed", ["Hello World"])
 
-func _server_button_pressed(message: String):
+func _server_button_pressed(sender_id: int, message: String):
 	# Server could validate incoming data here, perform state change etc.
-	message += " - From Server"
+	message += " - From Server via " + Steam.getFriendPersonaName(sender_id)
 	var number = randi() % 100
 	SteamNetwork.rpc_all_clients(self, "_client_button_pressed", [message, number])
 
-func _client_button_pressed(message, number):
+func _client_button_pressed(sender_id: int, message, number):
 	rpc_on_server_label.text = "%s (%s)" % [message, number]
 
 ################################################

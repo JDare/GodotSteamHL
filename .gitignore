@@ -11,3 +11,5 @@ builds
 builds/*
 icon.png
 default_env.tres
+*.import
+project.godot
