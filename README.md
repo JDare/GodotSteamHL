@@ -119,7 +119,7 @@ func server_buy_item(sender_id: int, expensive_item):
   if not SteamNetwork.is_server():
     return
   get_player(sender_id).remove_gold(999)
-  SteamNetwork.rpc_on_client(sender_id, "client_got_scammed")  
+  SteamNetwork.rpc_on_client(self, sender_id, "client_got_scammed")  
 ```
 
 
