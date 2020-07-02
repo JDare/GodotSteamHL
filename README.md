@@ -87,6 +87,7 @@ peer_status_updated(steam_id)
 ### Functions
 
 *The following can be called on clients:*
+
 ```rpc_on_server(caller: Node, method: String, args: Array)```
 
 This calls an RPC on the server, it works very similar to Godots HighLevel networking.
@@ -104,6 +105,7 @@ func server_shoot(sender_id: int, bad_guy):
     # now update bad_guy state to all peers
 ```
 
+---
 
 *The following are all designed to be used on the peer acting as the server.*
 
