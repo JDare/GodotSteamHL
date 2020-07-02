@@ -2,37 +2,39 @@ extends Node
 
 signal peer_status_updated(steam_id)
 
-enum PACKET_TYPE { HANDSHAKE = 1, HANDSHAKE_REPLY = 2, PEER_STATE = 3, NODE_PATH_UPDATE = 4, RPC = 5 }
+enum PACKET_TYPE { HANDSHAKE = 1, HANDSHAKE_REPLY = 2, PEER_STATE = 3, NODE_PATH_UPDATE = 4, NODE_PATH_CONFIRM = 5, RPC = 6, RPC_WITH_NODE_PATH = 7 }
 
 var _peers = {}
 var _my_steam_id := 0
+var _server_steam_id := 0
 var _node_path_cache = {}
 
-var _peer_node_path_state = {}
+var _peers_confirmed_node_path = {}
 var _next_path_cache_index := 0
 
 var _registered_nodes = []
 
+
 # CLIENTS AND SERVER
 # Calls this method on the server
 func rpc_on_server(caller: Node, method: String, args: Array):
-	pass
+	_rpc(get_server_peer(), caller, method, args)
 
 # SERVER ONLY
 # Calls this method on the client specified
-func rpc_on_client():
-	pass
+func rpc_on_client(to_peer: Peer, caller: Node, method: String, args: Array):
+	_rpc(to_peer, caller, method, args)
 
 # SERVER ONLY
 # Calls this method on ALL clients connected
-func rpc_all_clients():
-	pass
+func rpc_all_clients(caller: Node, method: String, args: Array):
+	for peer in _peers.values():
+		_rpc(peer, caller, method, args)
 
 # Required to register a node for network related activities.
 # Otherwise calls to this node will be ignored
 func register(caller: Node, method_restriction = []):
 	_registered_nodes.append(caller)
-	_server_add_node_path(caller, _add_node_path_cache(caller))
 
 # Returns whether a peer is connected or not.
 func is_peer_connected(steam_id) -> bool:
@@ -54,42 +56,107 @@ func get_peer(steam_id) -> Peer:
 func is_server() -> bool:
 	return _peers[_my_steam_id].host
 
+func get_server_peer() -> Peer:
+	return get_peer(get_server_steam_id())
+
+func get_server_steam_id() -> int:
+	if _server_steam_id > 0:
+		return _server_steam_id
+	for peer in _peers.values():
+		if peer.host:
+			_server_steam_id = peer.steam_id
+			return _server_steam_id
+	return -1
+
 func _rpc(to_peer: Peer, node: Node, method: String, args: Array):
-	if not _peers_confirmed_path(node):
-		# need to confirm path?
+	if to_peer == null:
+		push_warning("Cannot send an RPC to a null peer. Check youre completed connected to the network first")
+		return
+	#check we are connected first
+	if not is_peer_connected(_my_steam_id):
+		push_warning("Cannot send an RPC when not connected to the network")
 		return
 		
+	if not is_peer_connected(to_peer.steam_id):
+		push_warning("Cannot send an RPC to someone who is not connected to the network!")
+		return
+	
+	var node_path = node.get_path()
+	var path_cache_index = _get_path_cache(node.get_path())
+	if path_cache_index == -1 and is_server():
+		path_cache_index = _add_node_path_cache(node_path)
+	
+	
+	if to_peer.steam_id == _my_steam_id and is_server():
+		# we can skip sending to network and run locally
+		_execute_rpc(get_peer(_my_steam_id), path_cache_index, method, args)
+		return
+	
+	if to_peer.steam_id == _my_steam_id:
+		push_warning("Client ried to send self an RPC request!")
+	
 	var packet = PoolByteArray()
-	packet.append(PACKET_TYPE.RPC)
+	var payload = [path_cache_index, method, args]
+	
+	if is_server() and not _peer_confirmed_path(to_peer, node) or \
+		path_cache_index == -1:
+		payload.push_front(node.get_path())
+		packet.append(PACKET_TYPE.RPC_WITH_NODE_PATH)
+	else:
+		packet.append(PACKET_TYPE.RPC)
+	
+	var serialized_payload = var2bytes(payload)
+	
+	packet.append_array(serialized_payload)
+	_send_p2p_packet(to_peer.steam_id, packet)
 
-func _peers_confirmed_path(node: Node):
-	pass
+func _peer_confirmed_path(peer: Peer, node: Node):
+	var path_cache_index = _get_path_cache(node.get_path())
+	return path_cache_index in _peers_confirmed_node_path[peer.steam_id]
 
-func _server_add_node_path(node: Node, path_cache_index: int):
-	var path_index = _add_node_path_cache(node)
+func _server_update_node_path_cache(peer_id: int, node_path: NodePath):
+	if not is_server():
+		return
+	var path_cache_index = _get_path_cache(node_path)
+	if path_cache_index == -1:
+		path_cache_index = _add_node_path_cache(node_path)
 	var packet = PoolByteArray()
-	packet.append(PACKET_TYPE.NODE_PATH_UPDATE)
-	packet.append(var2bytes(path_cache_index))
-	packet.append(var2bytes(node.get_path()))
+	var payload = var2bytes([path_cache_index, node_path])
+	packet.append_array(payload)
+	_send_p2p_packet(peer_id, packet)
 
-func _add_node_path_cache(node: Node, path_cache_index: int = -1) -> int:
-	var already_exists_id = _get_path_cache_from_node(node)
-	if already_exists_id != -1:
+func _update_node_path_cache(sender_id: int, packet_data: PoolByteArray):
+	if sender_id != get_server_steam_id():
+		return
+	var data = bytes2var(packet_data)
+	var path_cache_index = data[0]
+	var node_path = data[1]
+	_add_node_path_cache(node_path, path_cache_index)
+	_send_p2p_command_packet(get_server_steam_id(), PACKET_TYPE.NODE_PATH_CONFIRM, path_cache_index)
+
+func _server_confirm_peer_node_path(peer_id, path_cache_index: int):
+	if not is_server():
+		return
+	_peers_confirmed_node_path[peer_id].append(path_cache_index)
+
+func _add_node_path_cache(node_path: NodePath, path_cache_index: int = -1) -> int:
+	var already_exists_id = _get_path_cache(node_path)
+	if already_exists_id != -1 and already_exists_id == path_cache_index:
 		return already_exists_id
 	
 	if path_cache_index == -1:
 		_next_path_cache_index += 1
 		path_cache_index = _next_path_cache_index
-	_node_path_cache[path_cache_index] = node
+	_node_path_cache[path_cache_index] = node_path
 	
 	return path_cache_index
 
-func _get_node_from_path_cache(path_cache_index: int):
+func _get_node_path(path_cache_index: int) -> NodePath:
 	return _node_path_cache.get(path_cache_index)
 
-func _get_path_cache_from_node(node: Node) -> int:
+func _get_path_cache(node_path: NodePath) -> int:
 	for path_cache_index in _node_path_cache:
-		if _node_path_cache[path_cache_index] == node:
+		if _node_path_cache[path_cache_index] == node_path:
 			return path_cache_index
 	return -1
 		
@@ -110,18 +177,22 @@ func _process(delta):
 	# Ensure that Steam.run_callbacks() is being called somewhere in a _process()
 	_read_p2p_packet()
 
+func _create_peer(steam_id):
+	var peer = Peer.new()
+	peer.steam_id = steam_id
+	_peers_confirmed_node_path[steam_id] = []
+	return peer
+
 func _init_p2p_host(lobby_id):
 	print("Initializing P2P Host as %s" % _my_steam_id)
-	var host_peer = Peer.new()
-	host_peer.steam_id = _my_steam_id
+	var host_peer = _create_peer(_my_steam_id)
 	host_peer.host = true
 	host_peer.connected = true
 	_peers[_my_steam_id] = host_peer
 
 func _init_p2p_session(steam_id):
 	print("Initializing P2P Session with %s" % steam_id)
-	_peers[steam_id] = Peer.new()
-	_peers[steam_id].steam_id = steam_id
+	_peers[steam_id] = _create_peer(steam_id)
 	_send_p2p_command_packet(steam_id, PACKET_TYPE.HANDSHAKE)
 
 func _close_p2p_session(steam_id):
@@ -132,9 +203,11 @@ func _close_p2p_session(steam_id):
 		_peers.erase(steam_id)
 	_server_send_peer_state()
 
-func _send_p2p_command_packet(steam_id, packet_type: int):
+func _send_p2p_command_packet(steam_id, packet_type: int, arg = null):
 	var payload = PoolByteArray()
 	payload.append(packet_type)
+	if arg != null:
+		payload.append_array(var2bytes(arg))
 	if not _send_p2p_packet(steam_id, payload):
 		push_error("Failed to send command packet %s" % packet_type)
 
@@ -165,7 +238,6 @@ func _read_p2p_packet():
 		var packet_data: PoolByteArray = packet["data"]
 
 		_handle_packet(sender_id, packet_data)
-#		var readable = bytes2var(packet.data.subarray(1, packet_size - 1))
 
 func _confirm_peer(steam_id):
 	if not _peers.has(steam_id):
@@ -208,7 +280,6 @@ func _update_peer_state(payload: PoolByteArray):
 			_peers.erase(peer_id)
 			emit_signal("peer_status_updated", peer_id)
 			
-
 func _handle_packet(sender_id, payload: PoolByteArray):
 	if payload.size() == 0:
 		push_error("Cannot handle an empty packet payload!")
@@ -225,6 +296,56 @@ func _handle_packet(sender_id, payload: PoolByteArray):
 			_confirm_peer(sender_id)
 		PACKET_TYPE.PEER_STATE:
 			_update_peer_state(packet_data)
+		PACKET_TYPE.NODE_PATH_CONFIRM:
+			_server_confirm_peer_node_path(sender_id, bytes2var(packet_data))
+		PACKET_TYPE.NODE_PATH_UPDATE:
+			_update_node_path_cache(sender_id, packet_data)
+		PACKET_TYPE.RPC_WITH_NODE_PATH:
+			_handle_rpc_packet_with_path(sender_id, packet_data)
+		PACKET_TYPE.RPC:
+			_handle_rpc_packet(sender_id, packet_data)
+
+func _handle_rpc_packet_with_path(sender_id: int, payload: PoolByteArray):
+	var peer = get_peer(sender_id)
+	var data = bytes2var(payload)
+	var path_cache_index = data[1]
+	var node_path = data[0]
+	var method = data[2]
+	var args = data[3]
+	if is_server():
+		# send rpc path + cache num to this client
+		path_cache_index = _get_path_cache(node_path)
+		#if this path cache doesnt exist yet, lets create it now and send to client
+		if path_cache_index == -1:
+			path_cache_index = _add_node_path_cache(node_path)
+		_server_update_node_path_cache(sender_id, node_path)
+	else:
+		_add_node_path_cache(node_path, path_cache_index)
+		_send_p2p_command_packet(sender_id, PACKET_TYPE.NODE_PATH_CONFIRM, path_cache_index)
+	_execute_rpc(peer, path_cache_index, method, args)
+
+func _handle_rpc_packet(sender_id: int, payload: PoolByteArray):
+	var peer = get_peer(sender_id)
+	var data = bytes2var(payload)
+	var path_cache_index = data[0]
+	var method = data[1]
+	var args = data[2]
+	_execute_rpc(peer, path_cache_index, method, args)
+
+func _execute_rpc(sender: Peer, path_cache_index: int, method: String, args: Array):
+	var node_path = _get_node_path(path_cache_index)
+	if node_path == null:
+		push_error("NodePath index %s does not exist on this client! Cannot call RPC" % path_cache_index)
+		return
+	var node = get_node_or_null(node_path)
+	if node == null:
+		push_error("Node %s does not exist on this client! Cannot call RPC" % node_path)
+		return
+	if not node.has_method(method):
+		push_error("Node %s does not have a method %s" % [node.name, method])
+		return
+	
+	node.callv(method, args)
 
 func _on_p2p_session_connect_fail(lobby_id: int, session_error):
 	# If no error was given

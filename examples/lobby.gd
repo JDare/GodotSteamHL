@@ -21,6 +21,7 @@ var invite_intent = false
 
 func _ready():
 	connected_gui.visible = false
+	rpc_on_server_label.text = ""
 	
 	SteamLobby.connect("lobby_created", self, "on_lobby_created")
 	SteamLobby.connect("lobby_joined", self, "on_lobby_joined")
@@ -74,11 +75,17 @@ func on_peer_status_changed(steam_id):
 # SteamNetwork Examples:
 
 func on_rpc_server_pressed():
-	SteamNetwork.rpc_on_server(self, "_server_button_pressed", ["Hello Server", 42])
+	SteamNetwork.rpc_on_server(self, "_server_button_pressed", ["Hello World"])
 
-func _server_button_pressed(message: String, number: int):
+func _server_button_pressed(message: String):
 	print("Server received RPC from someone!")
+	# Server could validate incoming data here, perform state change etc.
+	message += " - From Server"
+	var number = randi() % 100
+	SteamNetwork.rpc_all_clients(self, "_client_button_pressed", [message, number])
 
+func _client_button_pressed(message, number):
+	rpc_on_server_label.text = "%s (%s)" % [message, number]
 
 ################################################
 # Basic lobby connections/setup
