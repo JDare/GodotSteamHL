@@ -27,7 +27,8 @@ This means its ideal for small scale games with low numbers of users playing tog
 
 These are all the connections emitted from the SteamLobby autoload.
 
-```player_joined_lobby(steam_id)
+```
+player_joined_lobby(steam_id)
 player_left_lobby(steam_id)
 lobby_created(lobby_id)
 lobby_joined(lobby_id)
