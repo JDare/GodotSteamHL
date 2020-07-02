@@ -27,12 +27,12 @@ This means its ideal for small scale games with low numbers of users playing tog
 
 These are all the connections emitted from the SteamLobby autoload.
 
-```signal player_joined_lobby(steam_id)
-signal player_left_lobby(steam_id)
-signal lobby_created(lobby_id)
-signal lobby_joined(lobby_id)
-signal lobby_owner_changed(previous_owner, new_owner)
-signal chat_message_received(sender_steam_id, message)
+```player_joined_lobby(steam_id)
+player_left_lobby(steam_id)
+lobby_created(lobby_id)
+lobby_joined(lobby_id)
+lobby_owner_changed(previous_owner, new_owner)
+chat_message_received(sender_steam_id, message)
 ```
 
 ### Functions
@@ -73,3 +73,102 @@ Returns the steam_id of the current owner of the lobby.
 
 Sends a chat message to the lobby, this will emit a `chat_message_received` signal on each user connected to the lobby.
 
+
+## SteamNetwork
+
+### Connections
+
+These are all the connections emitted from the SteamNetwork autoload.
+
+```
+peer_status_updated(steam_id)
+```
+
+### Functions
+
+*The following can be called on clients:*
+```rpc_on_server(caller: Node, method: String, args: Array)```
+
+This calls an RPC on the server, it works very similar to Godots HighLevel networking.
+
+Usage Example: 
+```
+func shoot(bad_guy):
+  SteamNetwork.rpc_on_server(self, "server_shoot", [bad_guy])
+  
+func server_shoot(sender_id: int, bad_guy):
+  if not SteamNetwork.is_server():
+    return
+  if can_shoot(sender_id, bad_guy):
+    bad_guy.remove_health(10)
+    # now update bad_guy state to all peers
+```
+
+
+*The following are all designed to be used on the peer acting as the server.*
+
+```rpc_on_client(to_peer: Peer, caller: Node, method: String, args: Array)```
+
+Calls this method on the client specified.
+
+Usage Example:
+```
+func server_buy_item(sender_id: int, expensive_item):
+  if not SteamNetwork.is_server():
+    return
+  get_player(sender_id).remove_gold(999)
+  SteamNetwork.rpc_on_client(sender_id, "client_got_scammed")  
+```
+
+
+```rpc_all_clients(caller: Node, method: String, args: Array)```
+
+Similar to `rpc_on_client`, this calls an RPC on ALL clients.
+
+Usage Example:
+```
+func server_stun_bad_guy(bad_guy):
+  if not SteamNetwork.is_server():
+    return
+  SteamNetwork.rpc_all_clients(self, "client_bad_guy_got_stunned", [bad_guy])
+  
+func client_bad_guy_got_stunned(sender_id, the_bad_guy):
+  # do something with bad guy
+  pass
+```
+
+
+```remote_set(caller: Node, property: String, value)```
+
+Sets a property on a node to the specified value
+
+Usage Example:
+```
+var bad_guy_health := 30
+func server_update_bad_guy_health(health):
+  if not SteamNetwork.is_server():
+    return
+  SteamNetwork.remote_set(self, "bad_guy_health", health)
+```
+
+
+```is_peer_connected(steam_id) -> bool```
+
+Returns whether the peer passed by `steam_id` argument is connected or not
+
+```get_peer(steam_id) -> Peer```
+
+Returns a peer object for a given users steam_id
+
+```is_server() -> bool```
+
+Returns whether this peer is the server or not
+
+
+```get_server_peer() -> Peer```
+
+Gets the peer object of the server connection
+
+```get_server_steam_id() -> int```
+
+Gets the server users steam id
