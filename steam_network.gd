@@ -12,8 +12,6 @@ var _node_path_cache = {}
 var _peers_confirmed_node_path = {}
 var _next_path_cache_index := 0
 
-var _registered_nodes = []
-
 func _ready():
 	# This requires SteamLobby to be configured as an autoload/dependency.
 	SteamLobby.connect("player_joined_lobby", self, "_init_p2p_session")
@@ -105,6 +103,8 @@ func _migrate_host(old_owner_id, new_owner_id):
 		return
 	
 	Steam.closeP2PSessionWithUser(old_owner_id)
+	
+	_server_steam_id = 0
 	
 	_node_path_cache.clear()
 	_next_path_cache_index = 0
@@ -313,7 +313,6 @@ func _server_send_peer_state():
 	print("Sending Peer State")
 	var peers = []
 	for peer in _peers.values():
-		prints(peer.steam_id, peer.connected, peer.host)
 		peers.append(peer.serialize())
 	var payload = PoolByteArray()
 	# add packet type header
@@ -345,7 +344,6 @@ func _handle_packet(sender_id, payload: PoolByteArray):
 		push_error("Cannot handle an empty packet payload!")
 		return
 	var packet_type = payload[0]
-	print("Received packet %s from %s" % [packet_type, sender_id])
 	var packet_data = null
 	if payload.size() > 1:
 		packet_data = payload.subarray(1, payload.size()-1)

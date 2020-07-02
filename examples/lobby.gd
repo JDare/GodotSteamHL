@@ -101,7 +101,7 @@ func on_change_owner_pressed():
 	var user_index = member_list.get_selected_items()[0]
 	var user = SteamLobby.get_lobby_members().keys()[user_index]
 	var me = Steam.getSteamID()
-	if user != me and SteamLobby.is_owner(me):
+	if user != me and SteamLobby.is_owner():
 		Steam.setLobbyOwner(SteamLobby.get_lobby_id(), user)
 
 func on_create_lobby_pressed():
@@ -129,6 +129,9 @@ func on_chat_send_pressed():
 
 func render_lobby_members():
 	member_list.clear()
+	
+	change_owner_btn.visible = SteamLobby.is_owner()
+
 	var lobby_members = SteamLobby.get_lobby_members()
 	for member_id in lobby_members:
 		var member = lobby_members[member_id]

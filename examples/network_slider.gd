@@ -14,4 +14,6 @@ func on_value_changed(new_value):
 		value = health
 		
 func set_health(new_health):
+	health = new_health
+	value = health
 	$Label.text = "Player Health: " + str(new_health)
