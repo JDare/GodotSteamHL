@@ -1,6 +1,7 @@
 extends Node
 
 signal peer_status_updated(steam_id)
+signal peer_session_failure(steam_id, reason)
 
 enum PACKET_TYPE { HANDSHAKE = 1, HANDSHAKE_REPLY = 2, PEER_STATE = 3, NODE_PATH_UPDATE = 4, NODE_PATH_CONFIRM = 5, RPC = 6, RPC_WITH_NODE_PATH = 7, RSET = 8, RSET_WITH_NODE_PATH = 9 }
 
@@ -107,6 +108,13 @@ func get_server_steam_id() -> int:
 			_server_steam_id = peer.steam_id
 			return _server_steam_id
 	return -1
+
+# Returns whether all peers are connected or not.
+func peers_connected() -> bool:
+	for peer_id in _peers:
+		if _peers[peer_id].connected == false:
+			return false
+	return true
 
 func _get_permission_hash(node_path: NodePath, value: String = ""):
 	if value.empty():
@@ -295,8 +303,11 @@ func _init_p2p_session(steam_id):
 
 func _close_p2p_session(steam_id):
 	if steam_id == _my_steam_id:
+		Steam.closeP2PSessionWithUser(_server_steam_id)
+		_server_steam_id = 0
 		_peers.clear()
 		return
+	
 	print("Closing P2P Session with %s" % steam_id)
 	var session_state = Steam.getP2PSessionState(steam_id)
 	if session_state.has("connection_active") and session_state["connection_active"]:
@@ -392,12 +403,7 @@ func _handle_packet(sender_id, payload: PoolByteArray):
 		packet_data = payload.subarray(1, payload.size()-1)
 	match packet_type:
 		PACKET_TYPE.HANDSHAKE:
-			# This is handled by the initial p2p request response
-			# func _on_p2p_session_request(remote_steam_id):
-			# the manual response would be:
-			# _send_p2p_command_packet(sender_id, PACKET_TYPE.HANDSHAKE_REPLY)
-			pass
-
+			_send_p2p_command_packet(sender_id, PACKET_TYPE.HANDSHAKE_REPLY)
 		PACKET_TYPE.HANDSHAKE_REPLY:
 			_confirm_peer(sender_id)
 		PACKET_TYPE.PEER_STATE:
@@ -512,34 +518,39 @@ func _execute_rpc(sender: Peer, path_cache_index: int, method: String, args: Arr
 	args.push_front(sender.steam_id)
 	node.callv(method, args)
 
-func _on_p2p_session_connect_fail(lobby_id: int, session_error):
+func _on_p2p_session_connect_fail(steam_id: int, session_error):
 	# If no error was given
 	match session_error:
 		Steam.P2P_SESSION_ERROR_NONE:
-			push_warning("Session failure with "+str(lobby_id)+" [no error given].")
+			push_warning("Session failure with "+str(steam_id)+" [no error given].")
 		Steam.P2P_SESSION_ERROR_NOT_RUNNING_APP:
-			push_warning("Session failure with "+str(lobby_id)+" [target user not running the same game].")
+			push_warning("Session failure with "+str(steam_id)+" [target user not running the same game].")
 		Steam.P2P_SESSION_ERROR_NO_RIGHTS_TO_APP:
-			push_warning("Session failure with "+str(lobby_id)+" [local user doesn't own app / game].")
+			push_warning("Session failure with "+str(steam_id)+" [local user doesn't own app / game].")
 		Steam.P2P_SESSION_ERROR_DESTINATION_NOT_LOGGED_ON:
-			push_warning("Session failure with "+str(lobby_id)+" [target user isn't connected to Steam].")
+			push_warning("Session failure with "+str(steam_id)+" [target user isn't connected to Steam].")
 		Steam.P2P_SESSION_ERROR_TIMEOUT:
-			push_warning("Session failure with "+str(lobby_id)+" [connection timed out].")
+			push_warning("Session failure with "+str(steam_id)+" [connection timed out].")
 		Steam.P2P_SESSION_ERROR_MAX:
-			push_warning("Session failure with "+str(lobby_id)+" [unused].")
+			push_warning("Session failure with "+str(steam_id)+" [unused].")
 		_:
-			push_warning("Session failure with "+str(lobby_id)+" [unknown error "+str(session_error)+"].")
+			push_warning("Session failure with "+str(steam_id)+" [unknown error "+str(session_error)+"].")
 	
+	emit_signal("peer_session_failure", steam_id, session_error)
+	if steam_id in _peers:
+		_peers[steam_id].connected = false
+		_server_send_peer_state()
+
 func _on_p2p_session_request(remote_steam_id):
 	print("Received p2p session request from %s" % remote_steam_id)
 	# Get the requester's name
 	var requestor = Steam.getFriendPersonaName(remote_steam_id)
 	
-	# Accept the P2P session; can apply logic to deny this request if needed
-	Steam.acceptP2PSessionWithUser(remote_steam_id)
-	
-	# Make the initial handshake
-	_send_p2p_command_packet(remote_steam_id, PACKET_TYPE.HANDSHAKE_REPLY)
+	# Only accept this p2p request if its from the host of the lobby.
+	if SteamLobby.get_owner() == remote_steam_id:
+		Steam.acceptP2PSessionWithUser(remote_steam_id)
+	else:
+		push_warning("Got a rogue p2p session request from %s. Not accepting." % remote_steam_id)
 
 class Peer:
 	var connected := false
