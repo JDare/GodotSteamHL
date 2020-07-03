@@ -80,4 +80,4 @@ func set_health(new_health):
 	$Label.text = "Player Health: " + str(new_health)
 ```
 
-For more indepth documentation and examples, please visit the [Wiki] https://github.com/JDare/GodotSteamHL/wiki
+For more indepth documentation and examples, please visit the [Wiki](https://github.com/JDare/GodotSteamHL/wiki)
