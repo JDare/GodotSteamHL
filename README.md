@@ -84,3 +84,9 @@ func set_health(new_health):
 ```
 
 For more indepth documentation and examples, please visit the [Wiki](https://github.com/JDare/GodotSteamHL/wiki)
+
+
+## TODO
+* Implement Matchmaking Lobby features / listing and filtering Lobbies.
+* Object ownership, allow peers other than Server make authorized changes.
+* Potentially move cpu intensive portions to GDNative
