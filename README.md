@@ -2,6 +2,8 @@
 
 This library is designed to work with [GodotSteam](https://github.com/Gramps/GodotSteam) and provide a higher level implementation of some of the basic Steam Networking functionality, namely Lobbies and P2P Networking.
 
+GodotSteamHL is currently in **ALPHA** use at your own risk.
+
 ### Features
 * Easy to use Steam P2P Networking, no more manually sending and receiving packets
 * Server / Client architecture where one peer is the host and all other users connect to them.
