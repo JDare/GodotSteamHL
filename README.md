@@ -90,4 +90,5 @@ For more indepth documentation and examples, please visit the [Wiki](https://git
 ## TODO
 * Implement Matchmaking Lobby features / listing and filtering Lobbies.
 * Object ownership, allow peers other than Server make authorized changes.
+* Implement Steam P2P Session Authentication (Docs) [https://partner.steamgames.com/doc/features/auth]
 * Potentially move cpu intensive portions to GDNative
