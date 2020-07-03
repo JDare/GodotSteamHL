@@ -32,6 +32,13 @@ func _ready():
 	SteamLobby.connect("player_left_lobby", self, "on_player_left")
 	SteamLobby.connect("chat_message_received", self, "on_chat_message_received")
 	
+	SteamNetwork.register_rpcs(self,
+		[
+			["_server_button_pressed", SteamNetwork.PERMISSION.CLIENT_ALL],
+			["_client_button_pressed", SteamNetwork.PERMISSION.SERVER],
+		]
+	)
+	
 	SteamNetwork.connect("peer_status_updated", self, "on_peer_status_changed")
 	
 	create_lobby_btn.connect("pressed", self, "on_create_lobby_pressed")
@@ -87,7 +94,7 @@ func on_rpc_server_pressed():
 
 func _server_button_pressed(sender_id: int, message: String):
 	# Server could validate incoming data here, perform state change etc.
-	message += " - From Server via " + Steam.getFriendPersonaName(sender_id)
+	message = Steam.getFriendPersonaName(sender_id) + " says: " + message
 	var number = randi() % 100
 	SteamNetwork.rpc_all_clients(self, "_client_button_pressed", [message, number])
 
