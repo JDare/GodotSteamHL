@@ -20,6 +20,7 @@ This means its ideal for small scale games with low numbers of users playing tog
 ## Getting Started
 
 1. Clone this repo into your project or copy the 3 main files (steam_init.gd, steam_lobby.gd and steam_network.gd)
+  * `git submodule add https://github.com/JDare/GodotSteamHL.git addons/GodotSteamHL`
 2. Add the 3 files as autoloads in the order (steam_init, steam_lobby and finally steam_network). They should be added with the names `SteamInit`, `SteamLobby` and `SteamNetwork`.
   * Note: if you are already initializing Steam, you can ignore the `steam_init.gd` file as long as the `Steam.run_callbacks()` function is called somewhere.
 3. Thats it! Check the example directory of this repo and docs to get started.
