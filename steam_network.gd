@@ -297,6 +297,9 @@ func _init_p2p_host(lobby_id):
 	_peers[_my_steam_id] = host_peer
 
 func _init_p2p_session(steam_id):
+	if not is_server():
+		# only server should be initializing p2p requests.
+		return
 	print("Initializing P2P Session with %s" % steam_id)
 	_peers[steam_id] = _create_peer(steam_id)
 	_send_p2p_command_packet(steam_id, PACKET_TYPE.HANDSHAKE)
