@@ -7,6 +7,7 @@ This library is designed to work with [GodotSteam](https://github.com/Gramps/God
 * Server / Client architecture where one peer is the host and all other users connect to them.
 * Host migration for when that host leave the lobby/game
 * RPC/RSet support
+* Remote execution disabled by default. All methods/properties must be individually whitelisted to be invoked through the network.
 * Basic Steam Lobby interface providing easy access to player join/leave and other key events.
 
 ### What this is and what this isnt
