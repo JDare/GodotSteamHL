@@ -7,7 +7,7 @@ GodotSteamHL is currently in **ALPHA** use at your own risk.
 ### Features
 * Easy to use Steam P2P Networking, no more manually sending and receiving packets
 * Server / Client architecture where one peer is the host and all other users connect to them.
-* Host migration for when that host leave the lobby/game
+* Host migration for when that host leaves the lobby or disconnects
 * RPC/RSet support
 * Remote execution disabled by default. All methods/properties must be individually whitelisted to be invoked through the network.
 * Basic Steam Lobby interface providing easy access to player join/leave and other key events.
