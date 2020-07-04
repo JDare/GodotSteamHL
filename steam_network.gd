@@ -170,7 +170,7 @@ func _migrate_host(old_owner_id, new_owner_id):
 			
 
 func _rpc(to_peer_id: int, node: Node, method: String, args: Array):
-	var peer = get_peer(to_peer_id)
+	var to_peer = get_peer(to_peer_id)
 	if to_peer == null:
 		push_warning("Cannot send an RPC to a null peer. Check youre completed connected to the network first")
 		return
