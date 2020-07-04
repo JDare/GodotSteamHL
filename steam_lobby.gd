@@ -18,7 +18,7 @@ var _creating_lobby = false
 func _ready():
 	_my_steam_id = Steam.getSteamID()
 	if _my_steam_id == 0:
-		push_error("Unable to get steam id of user, check steam has been initialized first.")
+		push_warning("Unable to get steam id of user, check steam has been initialized first.")
 		return
 	
 	Steam.connect("lobby_created", self, "_on_lobby_created")

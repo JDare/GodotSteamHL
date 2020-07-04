@@ -89,6 +89,9 @@ func get_peer(steam_id) -> Peer:
 		print("Tried to get non-existent peer: %s" % steam_id)
 		return null
 
+func get_peers() -> Dictionary:
+	return _peers
+
 # Returns whether this peer is the server or not
 func is_server() -> bool:
 	if not _peers.has(_my_steam_id):
