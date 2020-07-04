@@ -89,9 +89,6 @@ func get_peer(steam_id) -> Peer:
 		print("Tried to get non-existent peer: %s" % steam_id)
 		return null
 
-func get_peers() -> Dictionary:
-	return _peers
-
 # Returns whether this peer is the server or not
 func is_server() -> bool:
 	if not _peers.has(_my_steam_id):
@@ -521,7 +518,7 @@ func _execute_rpc(sender: Peer, path_cache_index: int, method: String, args: Arr
 		return
 	
 	
-	args.append(sender.steam_id)
+	args.push_front(sender.steam_id)
 	node.callv(method, args)
 
 func _on_p2p_session_connect_fail(steam_id: int, session_error):
