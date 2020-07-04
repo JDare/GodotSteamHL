@@ -521,7 +521,7 @@ func _execute_rpc(sender: Peer, path_cache_index: int, method: String, args: Arr
 		return
 	
 	
-	args.push_front(sender.steam_id)
+	args.append(sender.steam_id)
 	node.callv(method, args)
 
 func _on_p2p_session_connect_fail(steam_id: int, session_error):
