@@ -51,21 +51,21 @@ func register_rpcs(caller: Node, methods: Array):
 # CLIENTS AND SERVER
 # Calls this method on the server
 func rpc_on_server(caller: Node, method: String, args: Array = []):
-	_rpc(get_server_peer(), caller, method, args)
+	_rpc(get_server_steam_id(), caller, method, args)
 
 # SERVER ONLY
 # Calls this method on the client specified
-func rpc_on_client(to_peer: Peer, caller: Node, method: String, args: Array = []):
+func rpc_on_client(to_peer_id: int, caller: Node, method: String, args: Array = []):
 	if not is_server():
 		push_warning("Tried to call RPC on client: %s %s" % [caller, method])
 		return
-	_rpc(to_peer, caller, method, args)
+	_rpc(to_peer_id, caller, method, args)
 
 # SERVER ONLY
 # Calls this method on ALL clients connected
 func rpc_all_clients(caller: Node, method: String, args: Array = []):
-	for peer in _peers.values():
-		rpc_on_client(peer, caller, method, args)
+	for peer_id in _peers:
+		rpc_on_client(peer_id, caller, method, args)
 
 # SERVER ONLY (OWNERSHIP TBD)
 func remote_set(caller: Node, property: String, value):
@@ -169,7 +169,8 @@ func _migrate_host(old_owner_id, new_owner_id):
 				_peers[steam_id].connected = true
 			
 
-func _rpc(to_peer: Peer, node: Node, method: String, args: Array):
+func _rpc(to_peer_id: int, node: Node, method: String, args: Array):
+	var peer = get_peer(to_peer_id)
 	if to_peer == null:
 		push_warning("Cannot send an RPC to a null peer. Check youre completed connected to the network first")
 		return
