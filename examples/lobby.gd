@@ -7,6 +7,8 @@ onready var member_list = $ItemList
 
 onready var connected_gui = $ConnectedGUI
 
+onready var start_btn = $ConnectedGUI/StartBtn
+
 onready var rpc_on_server_btn = $ConnectedGUI/RPCOnServerBtn
 onready var rpc_on_server_label = $ConnectedGUI/RPCOnServerBtn/Label
 
@@ -40,6 +42,8 @@ func _ready():
 	)
 	
 	SteamNetwork.connect("peer_status_updated", self, "on_peer_status_changed")
+	SteamNetwork.connect("all_peers_connected", self, "on_all_peers_connected")
+	
 	
 	create_lobby_btn.connect("pressed", self, "on_create_lobby_pressed")
 	invite_friend_btn.connect("pressed", self, "on_invite_friend_pressed")
@@ -85,6 +89,9 @@ func on_peer_status_changed(steam_id):
 	# This means we have confirmed a P2P connection going back and forth
 	# between us and this steam user.
 	render_lobby_members()
+
+func on_all_peers_connected():
+	start_btn.disabled = false
 
 ################################################
 # SteamNetwork Examples:
@@ -142,6 +149,8 @@ func render_lobby_members():
 	var lobby_members = SteamLobby.get_lobby_members()
 	for member_id in lobby_members:
 		var member = lobby_members[member_id]
+		if not SteamNetwork.is_peer_connected(member_id):
+			start_btn.disabled = true
 		var owner_str = "[Host] " if SteamLobby.is_owner(member_id) else ""
 		var connected_str = "Connecting ..." if not SteamNetwork.is_peer_connected(member_id) else "Connected"
 		var display_str = "%s%s (%s)" % [owner_str, member, connected_str]

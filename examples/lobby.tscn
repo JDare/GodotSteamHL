@@ -97,6 +97,17 @@ margin_top = 40.7551
 margin_right = 607.245
 margin_bottom = 78.7551
 text = "Change Host"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="StartBtn" type="Button" parent="ConnectedGUI"]
+margin_left = 792.215
+margin_top = 478.898
+margin_right = 981.215
+margin_bottom = 537.898
+disabled = true
+text = "Start Game"
 
 [node name="CreateLobbyBtn" type="Button" parent="."]
 margin_left = 44.0

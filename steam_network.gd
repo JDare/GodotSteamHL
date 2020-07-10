@@ -2,6 +2,7 @@ extends Node
 
 signal peer_status_updated(steam_id)
 signal peer_session_failure(steam_id, reason)
+signal all_peers_connected
 
 enum PACKET_TYPE { HANDSHAKE = 1, HANDSHAKE_REPLY = 2, PEER_STATE = 3, NODE_PATH_UPDATE = 4, NODE_PATH_CONFIRM = 5, RPC = 6, RPC_WITH_NODE_PATH = 7, RSET = 8, RSET_WITH_NODE_PATH = 9 }
 
@@ -300,14 +301,17 @@ func _init_p2p_host(lobby_id):
 	host_peer.host = true
 	host_peer.connected = true
 	_peers[_my_steam_id] = host_peer
-
+	emit_signal("all_peers_connected")
+	
 func _init_p2p_session(steam_id):
 	if not is_server():
 		# only server should be initializing p2p requests.
 		return
 	print("Initializing P2P Session with %s" % steam_id)
 	_peers[steam_id] = _create_peer(steam_id)
+	emit_signal("peer_status_updated", steam_id)
 	_send_p2p_command_packet(steam_id, PACKET_TYPE.HANDSHAKE)
+
 
 func _close_p2p_session(steam_id):
 	if steam_id == _my_steam_id:
@@ -368,6 +372,9 @@ func _confirm_peer(steam_id):
 	_peers[steam_id].connected = true
 	emit_signal("peer_status_updated", steam_id)
 	_server_send_peer_state()
+	
+	if peers_connected():
+		emit_signal("all_peers_connected")
 	
 func _server_send_peer_state():
 	print("Sending Peer State")
@@ -547,6 +554,7 @@ func _on_p2p_session_connect_fail(steam_id: int, session_error):
 	emit_signal("peer_session_failure", steam_id, session_error)
 	if steam_id in _peers:
 		_peers[steam_id].connected = false
+		emit_signal("peer_status_updated", steam_id)
 		_server_send_peer_state()
 
 func _on_p2p_session_request(remote_steam_id):
