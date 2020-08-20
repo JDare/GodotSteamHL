@@ -5,7 +5,9 @@ signal player_joined_lobby(steam_id)
 signal player_left_lobby(steam_id)
 signal lobby_created(lobby_id)
 signal lobby_joined(lobby_id)
+signal lobby_join_requested(lobby_id)
 signal lobby_owner_changed(previous_owner, new_owner)
+signal lobby_data_updated(steam_id)
 signal chat_message_received(sender_steam_id, message)
 
 var _my_steam_id := 0
@@ -107,7 +109,8 @@ func _on_lobby_joined(lobby_id: int, permissions, locked: bool, response):
 func _on_lobby_join_requested(lobby_id: int, friend_id):
 	print("Attempting to join lobby %s from request" % lobby_id)
 	# Attempt to join the lobby
-	join_lobby(lobby_id)
+	emit_signal("lobby_join_requested", lobby_id)
+#	join_lobby(lobby_id)
 	
 func _update_lobby_members():
 		# Clear your previous lobby list
@@ -140,6 +143,7 @@ func _on_lobby_data_update(success, lobby_id, member_id, key):
 		if host != _steam_lobby_host and host > 0:
 			_owner_changed(_steam_lobby_host, host)
 			_steam_lobby_host = host
+		emit_signal("lobby_data_updated", member_id)
 		
 #	print("Lobby Updated %s %s %s %s" % [success, lobby_id, member_id, key])
 
@@ -191,7 +195,8 @@ func _check_command_line():
 
 			# An invite argument was passed
 			if _lobby_invite_arg:
-				join_lobby(int(arg))
+				emit_signal("lobby_join_requested", int(arg))
+#				join_lobby(int(arg))
 
 			# A Steam connection argument exists
 			if arg == "+connect_lobby":
