@@ -49,6 +49,10 @@ func register_rpcs(caller: Node, methods: Array):
 		method.push_front(caller)
 		callv("register_rpc", method)
 
+func clear_node_path_cache():
+	_node_path_cache.clear()
+	_next_path_cache_index = 0
+
 # CLIENTS AND SERVER
 # Calls this method on the server
 func rpc_on_server(caller: Node, method: String, args: Array = []):
@@ -83,7 +87,7 @@ func is_peer_connected(steam_id) -> bool:
 		return false
 
 # Returns a peer object for a given users steam_id
-func get_peer(steam_id) -> Peer:
+func get_peer(steam_id):
 	if _peers.has(steam_id):
 		return _peers[steam_id]
 	else:
@@ -101,7 +105,7 @@ func is_server() -> bool:
 	return _peers[_my_steam_id].host
 
 # Gets the peer object of the server connection
-func get_server_peer() -> Peer:
+func get_server_peer():
 	return get_peer(get_server_steam_id())
 
 # Gets the server users steam id
@@ -147,8 +151,7 @@ func _migrate_host(old_owner_id, new_owner_id):
 	
 	_server_steam_id = 0
 	
-	_node_path_cache.clear()
-	_next_path_cache_index = 0
+	clear_node_path_cache()
 	
 	_peers.clear()
 	for steam_id in SteamLobby.get_lobby_members():
@@ -212,7 +215,7 @@ func _rpc(to_peer_id: int, node: Node, method: String, args: Array):
 	packet.append_array(serialized_payload)
 	_send_p2p_packet(to_peer.steam_id, packet)
 
-func _rset(to_peer: Peer, node: Node, property: String, value):
+func _rset(to_peer, node: Node, property: String, value):
 	var node_path = _get_rset_property_path(node.get_path(), property)
 	var path_cache_index = _get_path_cache(node_path)
 	if path_cache_index == -1 and is_server():
@@ -239,7 +242,7 @@ func _rset(to_peer: Peer, node: Node, property: String, value):
 func _get_rset_property_path(node_path: NodePath, property: String):
 	return NodePath("%s:%s" % [node_path, property])
 
-func _peer_confirmed_path(peer: Peer, node_path: NodePath):
+func _peer_confirmed_path(peer, node_path: NodePath):
 	var path_cache_index = _get_path_cache(node_path)
 	return path_cache_index in _peers_confirmed_node_path[peer.steam_id]
 
@@ -464,7 +467,7 @@ func handle_rset_packet(sender_id: int, payload: PoolByteArray):
 	
 	_execute_rset(peer, path_cache_index, value)
 	
-func _execute_rset(sender: Peer, path_cache_index: int, value):
+func _execute_rset(sender, path_cache_index: int, value):
 	var node_path = _get_node_path(path_cache_index)
 	if node_path == null:
 		push_error("NodePath index %s does not exist on this client! Cannot complete RemoteSet" % path_cache_index)
@@ -511,13 +514,15 @@ func _handle_rpc_packet(sender_id: int, payload: PoolByteArray):
 	var args = data[2]
 	_execute_rpc(peer, path_cache_index, method, args)
 
-func _execute_rpc(sender: Peer, path_cache_index: int, method: String, args: Array):
+func _execute_rpc(sender, path_cache_index: int, method: String, args: Array):
 	var node_path = _get_node_path(path_cache_index)
 	if node_path == null:
+		prints(sender, path_cache_index, method, args)
 		push_error("NodePath index %s does not exist on this client! Cannot call RPC" % path_cache_index)
 		return
 	
 	if not _sender_has_permission(sender.steam_id, node_path, method):
+		prints(sender, node_path, method, args)
 		push_error("Sender does not have permission to execute method %s on node %s" % [method, node_path])
 		return
 	
@@ -584,7 +589,7 @@ class Peer:
 		connected = unpacked[1]
 		host = unpacked[2]
 		
-	func eq(peer: Peer):
+	func eq(peer):
 		return peer.steam_id == steam_id and \
 				peer.host == host and \
 				peer.connected == connected
