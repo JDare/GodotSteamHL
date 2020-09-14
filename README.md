@@ -25,6 +25,10 @@ This means its ideal for small scale games with low numbers of users playing tog
   * Note: if you are already initializing Steam, you can ignore the `steam_init.gd` file as long as the `Steam.run_callbacks()` function is called somewhere.
 3. Thats it! Check the example directory of this repo and docs to get started.
 
+### Exports
+
+If you are using the provided `SteamInit` autoload file, ensure you add the custom feature flag `steam` to your export. For more information on feature flags, see the [Documentation](https://docs.godotengine.org/en/stable/getting_started/workflow/export/feature_tags.html).
+
 ## SteamNetwork Example
 This is taken from the lobby example in the /examples/ directory of the repo.
 
