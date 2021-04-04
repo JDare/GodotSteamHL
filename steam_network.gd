@@ -33,7 +33,12 @@ func _ready():
 
 func _process(delta):
 	# Ensure that Steam.run_callbacks() is being called somewhere in a _process()
-	_read_p2p_packet()
+	var packet_size = Steam.getAvailableP2PPacketSize(0)
+	while packet_size > 0:
+		# There is a packet 
+		_read_p2p_packet(packet_size)
+		# Check for more available packets
+		packet_size = Steam.getAvailableP2PPacketSize(0)
 
 func register_rset(caller: Node, property: String, permission: int):
 	var node_path = _get_rset_property_path(caller.get_path(), property)
@@ -347,24 +352,19 @@ func _broadcast_p2p_packet(data: PoolByteArray, send_type: int = Steam.P2P_SEND_
 		if peer_id != _my_steam_id:
 			_send_p2p_packet(peer_id, data, send_type, channel)
 
-func _read_p2p_packet():
-	var packet_size = Steam.getAvailableP2PPacketSize(0)
+func _read_p2p_packet(packet_size:int):
+	# Packet is a Dict which contains {"data": PoolByteArray, "steamIDRemote": CSteamID}
+	var packet = Steam.readP2PPacket(packet_size, 0)
+	
+	# or empty if it fails
+	if packet.empty():
+		push_warning("Steam Networking: read an empty packet with non-zero size!")
 
-	# There is a packet
-	if packet_size > 0:
-		
-		# Packet is a Dict which contains {"data": PoolByteArray, "steamIDRemote": CSteamID}
-		var packet = Steam.readP2PPacket(packet_size, 0)
-		
-		# or empty if it fails
-		if packet.empty():
-			push_warning("Steam Networking: read an empty packet with non-zero size!")
+	# Get the remote user's ID
+	var sender_id: int = packet["steamIDRemote"]
+	var packet_data: PoolByteArray = packet["data"]
 
-		# Get the remote user's ID
-		var sender_id: int = packet["steamIDRemote"]
-		var packet_data: PoolByteArray = packet["data"]
-
-		_handle_packet(sender_id, packet_data)
+	_handle_packet(sender_id, packet_data)
 
 func _confirm_peer(steam_id):
 	if not _peers.has(steam_id):
