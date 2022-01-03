@@ -136,7 +136,7 @@ func _update_lobby_members():
 func _on_lobby_invite(inviter, lobby, game):
 	pass
 	
-func _on_lobby_data_update(success, lobby_id, member_id, key):
+func _on_lobby_data_update(success, lobby_id, member_id):
 	if success:
 		# check for host change
 		var host = Steam.getLobbyOwner(_steam_lobby_id)
@@ -145,7 +145,7 @@ func _on_lobby_data_update(success, lobby_id, member_id, key):
 			_steam_lobby_host = host
 		emit_signal("lobby_data_updated", member_id)
 		
-#	print("Lobby Updated %s %s %s %s" % [success, lobby_id, member_id, key])
+#	print("Lobby Updated %s %s %s %s" % [success, lobby_id, member_id])
 
 func _owner_changed(was_steam_id, now_steam_id):
 	emit_signal("lobby_owner_changed", was_steam_id, now_steam_id)
