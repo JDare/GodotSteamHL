@@ -33,7 +33,7 @@ If you are using the provided `SteamInit` autoload file, ensure you add the cust
 This is taken from the lobby example in the /examples/ directory of the repo.
 
 ### RPC Example
-```
+```gdscript
 func _ready():
   # Bind RPC button signal
   $RPCOnServerBtn.connect("pressed", self, "on_rpc_server_pressed")
@@ -65,7 +65,7 @@ func _client_button_pressed(sender_id: int, message, number):
 
 ### Remote Set Example
 
-```
+```gdscript
 var health := 20 setget set_health
 
 func _ready():
