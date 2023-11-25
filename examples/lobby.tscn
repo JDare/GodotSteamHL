@@ -9,98 +9,104 @@ script = ExtResource("1")
 [node name="ConnectedGUI" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
+offset_right = 1024.0
+offset_bottom = 600.0
 
 [node name="ChatWindow" type="ItemList" parent="ConnectedGUI"]
 layout_mode = 0
-offset_left = 475.0
-offset_top = 280.0
-offset_right = 888.0
-offset_bottom = 570.0
+offset_left = 41.0
+offset_top = 391.0
+offset_right = 398.0
+offset_bottom = 535.0
 
 [node name="ChatLineEdit" type="LineEdit" parent="ConnectedGUI"]
 layout_mode = 0
-offset_left = 532.0
-offset_top = 577.0
-offset_right = 890.0
-offset_bottom = 608.0
+offset_left = 41.0
+offset_top = 544.0
+offset_right = 317.0
+offset_bottom = 557.0
 
 [node name="ChatSendBtn" type="Button" parent="ConnectedGUI"]
 layout_mode = 0
-offset_left = 475.0
-offset_top = 577.0
-offset_right = 522.0
-offset_bottom = 608.0
+offset_left = 328.0
+offset_top = 546.0
+offset_right = 398.0
+offset_bottom = 577.0
 text = "Send"
 
 [node name="RPCOnServerBtn" type="Button" parent="ConnectedGUI"]
 layout_mode = 0
-offset_left = 418.0
-offset_top = 116.0
-offset_right = 593.0
-offset_bottom = 147.0
+offset_left = 732.0
+offset_top = 42.0
+offset_right = 981.0
+offset_bottom = 91.0
 text = "Trigger RPC on Server"
 
 [node name="Label" type="Label" parent="ConnectedGUI/RPCOnServerBtn"]
 layout_mode = 0
-offset_left = 196.0
-offset_top = 5.0
-offset_right = 305.0
-offset_bottom = 31.0
+offset_left = 4.0
+offset_top = 62.0
+offset_right = 248.0
+offset_bottom = 78.0
 text = "Server Said: \"\""
 
 [node name="RSetSlider" type="HSlider" parent="ConnectedGUI"]
 layout_mode = 0
-offset_left = 337.0
-offset_top = 75.0
-offset_right = 866.0
-offset_bottom = 91.0
+offset_left = 734.0
+offset_top = 164.0
+offset_right = 980.0
+offset_bottom = 199.0
 script = ExtResource("2")
 
 [node name="Label" type="Label" parent="ConnectedGUI/RSetSlider"]
 layout_mode = 0
-offset_left = 548.0
-offset_top = -3.0
-offset_right = 609.0
-offset_bottom = 23.0
+offset_left = 6.0
+offset_top = 40.0
+offset_right = 235.0
+offset_bottom = 54.0
 text = "Value: 0"
 
 [node name="Title" type="Label" parent="ConnectedGUI/RSetSlider"]
 layout_mode = 0
-offset_left = 129.0
-offset_top = -37.0
-offset_right = 409.0
-offset_bottom = -11.0
+offset_left = 1.0
+offset_top = -11.0
+offset_right = 231.0
+offset_bottom = 3.0
 text = "Server RSet (only server can change)"
 
 [node name="ChangeHostBtn" type="Button" parent="ConnectedGUI"]
 layout_mode = 0
-offset_left = 24.0
-offset_top = 213.0
-offset_right = 130.0
-offset_bottom = 244.0
+offset_left = 489.245
+offset_top = 40.7551
+offset_right = 607.245
+offset_bottom = 78.7551
 text = "Change Host"
 
 [node name="StartBtn" type="Button" parent="ConnectedGUI"]
 layout_mode = 0
-offset_left = 24.0
-offset_top = 105.0
-offset_right = 120.0
-offset_bottom = 136.0
+offset_left = 792.215
+offset_top = 478.898
+offset_right = 981.215
+offset_bottom = 537.898
 disabled = true
 text = "Start Game"
 
 [node name="CreateLobbyBtn" type="Button" parent="."]
-offset_left = 24.0
-offset_top = 57.0
-offset_right = 135.0
-offset_bottom = 88.0
+offset_left = 44.0
+offset_top = 41.0
+offset_right = 159.0
+offset_bottom = 87.0
 text = "Create Lobby"
 
 [node name="InviteFriendBtn" type="Button" parent="."]
-offset_left = 24.0
-offset_top = 171.0
-offset_right = 129.0
-offset_bottom = 202.0
+offset_left = 45.0
+offset_top = 108.0
+offset_right = 160.0
+offset_bottom = 154.0
 text = "Invite Friend"
 
 [node name="ItemList" type="ItemList" parent="."]
+offset_left = 199.0
+offset_top = 39.0
+offset_right = 482.0
+offset_bottom = 159.0
