@@ -22,15 +22,14 @@ func _ready():
 	if _my_steam_id == 0:
 		push_warning("Unable to get steam id of user, check steam has been initialized first.")
 		return
-	
-	Steam.connect("lobby_created", self, "_on_lobby_created")
-	Steam.connect("lobby_match_list", self, "_on_match_list")
-	Steam.connect("lobby_joined", self, "_on_lobby_joined")
-	Steam.connect("lobby_chat_update", self, "_on_lobby_chat_update")
-	Steam.connect("lobby_message", self, "_on_lobby_message")
-	Steam.connect("lobby_data_update", self, "_on_lobby_data_update")
-	Steam.connect("lobby_invite", self, "_on_lobby_invite")
-	Steam.connect("join_requested", self, "_on_lobby_join_requested")
+	Steam.lobby_created.connect(_on_lobby_created)
+	Steam.lobby_match_list.connect(_on_match_list)
+	Steam.lobby_joined.connect(_on_lobby_joined)
+	Steam.lobby_chat_update.connect(_on_lobby_chat_update)
+	Steam.lobby_message.connect(_on_lobby_message)
+	Steam.lobby_data_update.connect(_on_lobby_data_update)
+	Steam.lobby_invite.connect(_on_lobby_invite)
+	Steam.join_requested.connect(_on_lobby_join_requested)
 	# Check for command line arguments
 	_check_command_line()
 
@@ -41,6 +40,7 @@ func in_lobby() -> bool:
 	return not _steam_lobby_id == 0
 
 func is_owner(steam_id = -1) -> bool:
+	if get_owner() == null: return false
 	if steam_id > 0:
 		return get_owner() == steam_id
 	return get_owner() == _my_steam_id

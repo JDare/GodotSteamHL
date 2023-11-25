@@ -1,11 +1,19 @@
 extends Node
 
+var app_id
 var steam_id
 var is_online: bool
 var is_game_owned: bool
 
 func is_steam_enabled():
 	return OS.has_feature("steam") or OS.is_debug_build()
+
+func _init():
+	OS.set_environment("SteamAppID", str(app_id))
+	OS.set_environment("SteamGameID", str(app_id))
+	
+	if (OS.get_environment("SteamAppID") == null):
+		new Error("Please set an App ID")
 
 func _ready():
 	if not is_steam_enabled():

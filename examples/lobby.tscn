@@ -1,139 +1,106 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=3 format=3 uid="uid://br0dwd66l30o4"]
 
-[ext_resource path="res://examples/lobby.gd" type="Script" id=1]
-[ext_resource path="res://examples/network_slider.gd" type="Script" id=2]
+[ext_resource type="Script" path="res://addons/GodotSteamHL/examples/lobby.gd" id="1"]
+[ext_resource type="Script" path="res://addons/GodotSteamHL/examples/network_slider.gd" id="2"]
 
 [node name="SteamLobby" type="Node2D"]
-script = ExtResource( 1 )
+script = ExtResource("1")
 
 [node name="ConnectedGUI" type="Control" parent="."]
-margin_right = 1024.0
-margin_bottom = 600.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+layout_mode = 3
+anchors_preset = 0
 
 [node name="ChatWindow" type="ItemList" parent="ConnectedGUI"]
-margin_left = 41.0
-margin_top = 391.0
-margin_right = 398.0
-margin_bottom = 535.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+layout_mode = 0
+offset_left = 475.0
+offset_top = 280.0
+offset_right = 888.0
+offset_bottom = 570.0
 
 [node name="ChatLineEdit" type="LineEdit" parent="ConnectedGUI"]
-margin_left = 41.0
-margin_top = 544.0
-margin_right = 317.0
-margin_bottom = 577.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+layout_mode = 0
+offset_left = 532.0
+offset_top = 577.0
+offset_right = 890.0
+offset_bottom = 608.0
 
 [node name="ChatSendBtn" type="Button" parent="ConnectedGUI"]
-margin_left = 328.0
-margin_top = 546.0
-margin_right = 398.0
-margin_bottom = 577.0
+layout_mode = 0
+offset_left = 475.0
+offset_top = 577.0
+offset_right = 522.0
+offset_bottom = 608.0
 text = "Send"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="RPCOnServerBtn" type="Button" parent="ConnectedGUI"]
-margin_left = 732.0
-margin_top = 42.0
-margin_right = 981.0
-margin_bottom = 91.0
+layout_mode = 0
+offset_left = 418.0
+offset_top = 116.0
+offset_right = 593.0
+offset_bottom = 147.0
 text = "Trigger RPC on Server"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="Label" type="Label" parent="ConnectedGUI/RPCOnServerBtn"]
-margin_left = 4.0
-margin_top = 62.0
-margin_right = 248.0
-margin_bottom = 78.0
+layout_mode = 0
+offset_left = 196.0
+offset_top = 5.0
+offset_right = 305.0
+offset_bottom = 31.0
 text = "Server Said: \"\""
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="RSetSlider" type="HSlider" parent="ConnectedGUI"]
-margin_left = 734.0
-margin_top = 164.0
-margin_right = 980.0
-margin_bottom = 199.0
-script = ExtResource( 2 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
+layout_mode = 0
+offset_left = 337.0
+offset_top = 75.0
+offset_right = 866.0
+offset_bottom = 91.0
+script = ExtResource("2")
 
 [node name="Label" type="Label" parent="ConnectedGUI/RSetSlider"]
-margin_left = 6.0
-margin_top = 40.0
-margin_right = 235.0
-margin_bottom = 54.0
+layout_mode = 0
+offset_left = 548.0
+offset_top = -3.0
+offset_right = 609.0
+offset_bottom = 23.0
 text = "Value: 0"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="Title" type="Label" parent="ConnectedGUI/RSetSlider"]
-margin_left = 1.0
-margin_top = -11.0
-margin_right = 231.0
-margin_bottom = 3.0
+layout_mode = 0
+offset_left = 129.0
+offset_top = -37.0
+offset_right = 409.0
+offset_bottom = -11.0
 text = "Server RSet (only server can change)"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="ChangeHostBtn" type="Button" parent="ConnectedGUI"]
-margin_left = 489.245
-margin_top = 40.7551
-margin_right = 607.245
-margin_bottom = 78.7551
+layout_mode = 0
+offset_left = 24.0
+offset_top = 213.0
+offset_right = 130.0
+offset_bottom = 244.0
 text = "Change Host"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="StartBtn" type="Button" parent="ConnectedGUI"]
-margin_left = 792.215
-margin_top = 478.898
-margin_right = 981.215
-margin_bottom = 537.898
+layout_mode = 0
+offset_left = 24.0
+offset_top = 105.0
+offset_right = 120.0
+offset_bottom = 136.0
 disabled = true
 text = "Start Game"
 
 [node name="CreateLobbyBtn" type="Button" parent="."]
-margin_left = 44.0
-margin_top = 41.0
-margin_right = 159.0
-margin_bottom = 87.0
+offset_left = 24.0
+offset_top = 57.0
+offset_right = 135.0
+offset_bottom = 88.0
 text = "Create Lobby"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="InviteFriendBtn" type="Button" parent="."]
-margin_left = 45.0
-margin_top = 108.0
-margin_right = 160.0
-margin_bottom = 154.0
+offset_left = 24.0
+offset_top = 171.0
+offset_right = 129.0
+offset_bottom = 202.0
 text = "Invite Friend"
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="ItemList" type="ItemList" parent="."]
-margin_left = 199.0
-margin_top = 39.0
-margin_right = 482.0
-margin_bottom = 159.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
