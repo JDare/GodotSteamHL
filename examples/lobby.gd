@@ -1,25 +1,24 @@
 extends Node
 
 
-onready var create_lobby_btn = $CreateLobbyBtn
-onready var invite_friend_btn = $InviteFriendBtn
-onready var member_list = $ItemList
+@onready var create_lobby_btn = $CreateLobbyBtn
+@onready var invite_friend_btn = $InviteFriendBtn
+@onready var member_list = $ItemList
+@onready var connected_gui = $ConnectedGUI
 
-onready var connected_gui = $ConnectedGUI
+@onready var start_btn = $ConnectedGUI/StartBtn
 
-onready var start_btn = $ConnectedGUI/StartBtn
+@onready var rpc_on_server_btn = $ConnectedGUI/RPCOnServerBtn
+@onready var rpc_on_server_label = $ConnectedGUI/RPCOnServerBtn/Label
 
-onready var rpc_on_server_btn = $ConnectedGUI/RPCOnServerBtn
-onready var rpc_on_server_label = $ConnectedGUI/RPCOnServerBtn/Label
+@onready var rset_slider = $ConnectedGUI/RSetSlider
+@onready var rset_label = $ConnectedGUI/RSetSlider/Label
 
-onready var rset_slider = $ConnectedGUI/RSetSlider
-onready var rset_label = $ConnectedGUI/RSetSlider/Label
+@onready var change_owner_btn = $ConnectedGUI/ChangeHostBtn
 
-onready var change_owner_btn = $ConnectedGUI/ChangeHostBtn
-
-onready var chat_line_edit = $ConnectedGUI/ChatLineEdit
-onready var chat_send_btn = $ConnectedGUI/ChatSendBtn
-onready var chat_window = $ConnectedGUI/ChatWindow
+@onready var chat_line_edit = $ConnectedGUI/ChatLineEdit
+@onready var chat_send_btn = $ConnectedGUI/ChatSendBtn
+@onready var chat_window = $ConnectedGUI/ChatWindow
 
 var invite_intent = false
 
@@ -27,12 +26,12 @@ func _ready():
 	connected_gui.visible = false
 	rpc_on_server_label.text = ""
 	
-	SteamLobby.connect("lobby_created", self, "on_lobby_created")
-	SteamLobby.connect("lobby_joined", self, "on_lobby_joined")
-	SteamLobby.connect("lobby_owner_changed", self, "on_lobby_owner_changed")
-	SteamLobby.connect("player_joined_lobby", self, "on_player_joined")
-	SteamLobby.connect("player_left_lobby", self, "on_player_left")
-	SteamLobby.connect("chat_message_received", self, "on_chat_message_received")
+	SteamLobby.lobby_created.connect(on_lobby_created)
+	SteamLobby.lobby_joined.connect(on_lobby_joined)
+	SteamLobby.lobby_owner_changed.connect(on_lobby_owner_changed)
+	SteamLobby.player_joined_lobby.connect(on_player_joined)
+	SteamLobby.player_left_lobby.connect(on_player_left)
+	SteamLobby.chat_message_received.connect(on_chat_message_received)
 	
 	SteamNetwork.register_rpcs(self,
 		[
@@ -41,19 +40,18 @@ func _ready():
 		]
 	)
 	
-	SteamNetwork.connect("peer_status_updated", self, "on_peer_status_changed")
-	SteamNetwork.connect("all_peers_connected", self, "on_all_peers_connected")
+	SteamNetwork.peer_status_updated.connect(on_peer_status_changed)
+	SteamNetwork.all_peers_connected.connect(on_all_peers_connected)
 	
+	create_lobby_btn.pressed.connect(on_create_lobby_pressed)
+	invite_friend_btn.pressed.connect(on_invite_friend_pressed)
 	
-	create_lobby_btn.connect("pressed", self, "on_create_lobby_pressed")
-	invite_friend_btn.connect("pressed", self, "on_invite_friend_pressed")
-	
-	chat_line_edit.connect("text_entered", self, "on_chat_text_entered")
-	chat_send_btn.connect("pressed", self, "on_chat_send_pressed")
+	chat_line_edit.text_submitted.connect(on_chat_text_entered)
+	chat_send_btn.pressed.connect(on_chat_send_pressed)
 
-	rpc_on_server_btn.connect("pressed", self, "on_rpc_server_pressed")
+	rpc_on_server_btn.pressed.connect(on_rpc_server_pressed)
 	
-	change_owner_btn.connect("pressed", self, "on_change_owner_pressed")
+	change_owner_btn.pressed.connect(on_change_owner_pressed)
 
 ###########################################
 # Steam Lobby/Network connect functions

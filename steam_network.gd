@@ -20,14 +20,14 @@ var _permissions = {}
 
 func _ready():
 	# This requires SteamLobby to be configured as an autoload/dependency.
-	SteamLobby.connect("player_joined_lobby", self, "_init_p2p_session")
-	SteamLobby.connect("player_left_lobby", self, "_close_p2p_session")
+	SteamLobby.player_joined_lobby.connect(_init_p2p_session)
+	SteamLobby.player_left_lobby.connect(_close_p2p_session)
 	
-	SteamLobby.connect("lobby_created", self, "_init_p2p_host")
-	SteamLobby.connect("lobby_owner_changed", self, "_migrate_host")
+	SteamLobby.lobby_created.connect(_init_p2p_host)
+	SteamLobby.lobby_owner_changed.connect(_migrate_host)
 	
-	Steam.connect("p2p_session_request", self, "_on_p2p_session_request")
-	Steam.connect("p2p_session_connect_fail", self, "_on_p2p_session_connect_fail")
+	Steam.p2p_session_request.connect(_on_p2p_session_request)
+	Steam.p2p_session_connect_fail.connect(_on_p2p_session_connect_fail)
 	
 	_my_steam_id = Steam.getSteamID()
 
@@ -131,7 +131,7 @@ func peers_connected() -> bool:
 	return true
 
 func _get_permission_hash(node_path: NodePath, value: String = ""):
-	if value.empty():
+	if value.is_empty():
 		return str(node_path).md5_text()
 	return (str(node_path) + value).md5_text()
 
@@ -205,7 +205,7 @@ func _rpc(to_peer_id: int, node: Node, method: String, args: Array):
 	if to_peer.steam_id == _my_steam_id:
 		push_warning("Client tried to send self an RPC request!")
 	
-	var packet = PoolByteArray()
+	var packet = PackedByteArray()
 	var payload = [path_cache_index, method, args]
 	
 	if is_server() and not _peer_confirmed_path(to_peer, node_path) or \
@@ -215,7 +215,7 @@ func _rpc(to_peer_id: int, node: Node, method: String, args: Array):
 	else:
 		packet.append(PACKET_TYPE.RPC)
 	
-	var serialized_payload = var2bytes(payload)
+	var serialized_payload = var_to_bytes(payload)
 	
 	packet.append_array(serialized_payload)
 	_send_p2p_packet(to_peer.steam_id, packet)
@@ -231,7 +231,7 @@ func _rset(to_peer, node: Node, property: String, value):
 		_execute_rset(to_peer, path_cache_index, value)
 		return
 	
-	var packet = PoolByteArray()
+	var packet = PackedByteArray()
 	var payload = [path_cache_index, value]
 	if is_server() and not _peer_confirmed_path(to_peer, node_path) or \
 		path_cache_index == -1:
@@ -240,7 +240,7 @@ func _rset(to_peer, node: Node, property: String, value):
 	else:
 		packet.append(PACKET_TYPE.RSET)
 	
-	var serialized_payload = var2bytes(payload)
+	var serialized_payload = var_to_bytes(payload)
 	packet.append_array(serialized_payload)
 	_send_p2p_packet(to_peer.steam_id, packet)
 
@@ -257,15 +257,15 @@ func _server_update_node_path_cache(peer_id: int, node_path: NodePath):
 	var path_cache_index = _get_path_cache(node_path)
 	if path_cache_index == -1:
 		path_cache_index = _add_node_path_cache(node_path)
-	var packet = PoolByteArray()
-	var payload = var2bytes([path_cache_index, node_path])
+	var packet = PackedByteArray()
+	var payload = var_to_bytes([path_cache_index, node_path])
 	packet.append_array(payload)
 	_send_p2p_packet(peer_id, packet)
 
-func _update_node_path_cache(sender_id: int, packet_data: PoolByteArray):
+func _update_node_path_cache(sender_id: int, packet_data: PackedByteArray):
 	if sender_id != get_server_steam_id():
 		return
-	var data = bytes2var(packet_data)
+	var data = bytes_to_var(packet_data)
 	var path_cache_index = data[0]
 	var node_path = data[1]
 	_add_node_path_cache(node_path, path_cache_index)
@@ -337,23 +337,23 @@ func _close_p2p_session(steam_id):
 	_server_send_peer_state()
 
 func _send_p2p_command_packet(steam_id, packet_type: int, arg = null):
-	var payload = PoolByteArray()
+	var payload = PackedByteArray()
 	payload.append(packet_type)
 	if arg != null:
-		payload.append_array(var2bytes(arg))
+		payload.append_array(var_to_bytes(arg))
 	if not _send_p2p_packet(steam_id, payload):
 		push_error("Failed to send command packet %s" % packet_type)
 
-func _send_p2p_packet(steam_id, data: PoolByteArray, send_type: int = Steam.P2P_SEND_RELIABLE, channel: int = 0) -> bool:
+func _send_p2p_packet(steam_id, data: PackedByteArray, send_type: int = Steam.P2P_SEND_RELIABLE, channel: int = 0) -> bool:
 	return Steam.sendP2PPacket(steam_id, data, send_type, channel)
 
-func _broadcast_p2p_packet(data: PoolByteArray, send_type: int = Steam.P2P_SEND_RELIABLE, channel: int = 0):
+func _broadcast_p2p_packet(data: PackedByteArray, send_type: int = Steam.P2P_SEND_RELIABLE, channel: int = 0):
 	for peer_id in _peers:
 		if peer_id != _my_steam_id:
 			_send_p2p_packet(peer_id, data, send_type, channel)
 
 func _read_p2p_packet(packet_size:int):
-	# Packet is a Dict which contains {"data": PoolByteArray, "steamIDRemote": CSteamID}
+	# Packet is a Dict which contains {"data": PackedByteArray, "steamIDRemote": CSteamID}
 	var packet = Steam.readP2PPacket(packet_size, 0)
 	
 	# or empty if it fails
@@ -362,7 +362,7 @@ func _read_p2p_packet(packet_size:int):
 
 	# Get the remote user's ID
 	var sender_id: int = packet["steam_id_remote"]
-	var packet_data: PoolByteArray = packet["data"]
+	var packet_data: PackedByteArray = packet["data"]
 
 	_handle_packet(sender_id, packet_data)
 
@@ -384,19 +384,19 @@ func _server_send_peer_state():
 	var peers = []
 	for peer in _peers.values():
 		peers.append(peer.serialize())
-	var payload = PoolByteArray()
+	var payload = PackedByteArray()
 	# add packet type header
 	payload.append(PACKET_TYPE.PEER_STATE)
 	# add peer data
-	payload.append_array(var2bytes(peers))
+	payload.append_array(var_to_bytes(peers))
 	
 	_broadcast_p2p_packet(payload)
 
-func _update_peer_state(payload: PoolByteArray):
+func _update_peer_state(payload: PackedByteArray):
 	if is_server():
 		return
 	print("Updating Peer State")
-	var serialized_peers = bytes2var(payload)
+	var serialized_peers = bytes_to_var(payload)
 	var new_peers = []
 	for serialized_peer in serialized_peers:
 		var peer = Peer.new()
@@ -411,14 +411,14 @@ func _update_peer_state(payload: PoolByteArray):
 			_peers.erase(peer_id)
 			emit_signal("peer_status_updated", peer_id)
 			
-func _handle_packet(sender_id, payload: PoolByteArray):
+func _handle_packet(sender_id, payload: PackedByteArray):
 	if payload.size() == 0:
 		push_error("Cannot handle an empty packet payload!")
 		return
 	var packet_type = payload[0]
 	var packet_data = null
 	if payload.size() > 1:
-		packet_data = payload.subarray(1, payload.size()-1)
+		packet_data = payload.slice(1, payload.size()-1)
 	match packet_type:
 		PACKET_TYPE.HANDSHAKE:
 			_send_p2p_command_packet(sender_id, PACKET_TYPE.HANDSHAKE_REPLY)
@@ -427,7 +427,7 @@ func _handle_packet(sender_id, payload: PoolByteArray):
 		PACKET_TYPE.PEER_STATE:
 			_update_peer_state(packet_data)
 		PACKET_TYPE.NODE_PATH_CONFIRM:
-			_server_confirm_peer_node_path(sender_id, bytes2var(packet_data))
+			_server_confirm_peer_node_path(sender_id, bytes_to_var(packet_data))
 		PACKET_TYPE.NODE_PATH_UPDATE:
 			_update_node_path_cache(sender_id, packet_data)
 		PACKET_TYPE.RPC_WITH_NODE_PATH:
@@ -439,9 +439,9 @@ func _handle_packet(sender_id, payload: PoolByteArray):
 		PACKET_TYPE.RSET:
 			handle_rset_packet(sender_id, packet_data)
 
-func _handle_rset_packet_with_path(sender_id: int, payload: PoolByteArray):
+func _handle_rset_packet_with_path(sender_id: int, payload: PackedByteArray):
 	var peer = get_peer(sender_id)
-	var data = bytes2var(payload)
+	var data = bytes_to_var(payload)
 	
 	var node_path = data[0]
 	var path_cache_index = data[1]
@@ -458,9 +458,9 @@ func _handle_rset_packet_with_path(sender_id: int, payload: PoolByteArray):
 		_send_p2p_command_packet(sender_id, PACKET_TYPE.NODE_PATH_CONFIRM, path_cache_index)
 	_execute_rset(peer, path_cache_index, value)
 
-func handle_rset_packet(sender_id: int, payload: PoolByteArray):
+func handle_rset_packet(sender_id: int, payload: PackedByteArray):
 	var peer = get_peer(sender_id)
-	var data = bytes2var(payload)
+	var data = bytes_to_var(payload)
 
 	var path_cache_index = data[0]
 	var value = data[1]
@@ -480,15 +480,15 @@ func _execute_rset(sender, path_cache_index: int, value):
 		push_error("Node %s does not exist on this client! Cannot complete RemoteSet" % node_path)
 		return
 	var property:String = node_path.get_subname(0)
-	if property == null or property.empty():
+	if property == null or property.is_empty():
 		push_error("Node %s could not resolve to a property. Cannot complete RemoteSet" % node_path)
 		return
 	
 	node.set(property, value)
 
-func _handle_rpc_packet_with_path(sender_id: int, payload: PoolByteArray):
+func _handle_rpc_packet_with_path(sender_id: int, payload: PackedByteArray):
 	var peer = get_peer(sender_id)
-	var data = bytes2var(payload)
+	var data = bytes_to_var(payload)
 	
 	var path_cache_index = data[1]
 	var node_path = data[0]
@@ -506,9 +506,9 @@ func _handle_rpc_packet_with_path(sender_id: int, payload: PoolByteArray):
 		_send_p2p_command_packet(sender_id, PACKET_TYPE.NODE_PATH_CONFIRM, path_cache_index)
 	_execute_rpc(peer, path_cache_index, method, args)
 
-func _handle_rpc_packet(sender_id: int, payload: PoolByteArray):
+func _handle_rpc_packet(sender_id: int, payload: PackedByteArray):
 	var peer = get_peer(sender_id)
-	var data = bytes2var(payload)
+	var data = bytes_to_var(payload)
 	var path_cache_index = data[0]
 	var method = data[1]
 	var args = data[2]
@@ -579,12 +579,12 @@ class Peer:
 	
 	var steam_id: int
 	
-	func serialize() -> PoolByteArray:
+	func serialize() -> PackedByteArray:
 		var data = [steam_id, connected, host]
-		return var2bytes(data)
+		return var_to_bytes(data)
 
-	func deserialize(data: PoolByteArray):
-		var unpacked = bytes2var(data)
+	func deserialize(data: PackedByteArray):
+		var unpacked = bytes_to_var(data)
 		steam_id = unpacked[0]
 		connected = unpacked[1]
 		host = unpacked[2]
