@@ -40,12 +40,12 @@ func in_lobby() -> bool:
 	return not _steam_lobby_id == 0
 
 func is_owner(steam_id = -1) -> bool:
-	if get_owner() == null: return false
+	if get_lobby_owner() == null: return false
 	if steam_id > 0:
-		return get_owner() == steam_id
-	return get_owner() == _my_steam_id
+		return get_lobby_owner() == steam_id
+	return get_lobby_owner() == _my_steam_id
 
-func get_owner():
+func get_lobby_owner():
 	return Steam.getLobbyOwner(_steam_lobby_id)
 
 func create_lobby(lobby_type: int, max_players: int):
